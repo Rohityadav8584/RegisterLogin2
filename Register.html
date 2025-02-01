@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration Page</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+        }
+        form {
+            width: 400px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        input {
+            width: 100%;
+            margin: 10px 0;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        a {
+            text-decoration: none;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <form id="registerForm">
+        <h2>Register</h2>
+        <input type="text" placeholder="Name" required id="name" />
+        <input type="text" placeholder="Username" required id="username" />
+        <input type="password" placeholder="Password" required id="password" />
+        <input type="password" placeholder="Confirm Password" id="confirmPassword" />
+        <button type="submit">Register</button>
+        <p><a href="login.html">Go to Login</a></p>
+    </form>
+
+    <script>
+        // Open IndexedDB
+        const dbName = "UserDatabase";
+        let db;
+
+        const request = indexedDB.open(dbName, 1);
+
+        request.onupgradeneeded = function(event) {
+            db = event.target.result;
+
+            // Create an object store for users with "username" as the key
+            if (!db.objectStoreNames.contains("users")) {
+                const objectStore = db.createObjectStore("users", { keyPath: "username" });
+                objectStore.createIndex("name", "name", { unique: false });
+            }
+        };
+
+        request.onsuccess = function(event) {
+            db = event.target.result;
+        };
+
+        request.onerror = function(event) {
+            console.error("Database error:", event.target.errorCode);
+        };
+
+        // Handle Form Submission
+        document.getElementById("registerForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+
+            const name = document.getElementById("name").value;
+            const username = document.getElementById("username").value;
+            const password = document.getElementById("password").value;
+            const confirmPassword = document.getElementById("confirmPassword").value;
+
+            if (password !== confirmPassword) {
+                alert("Passwords do not match!");
+                return;
+            }
+
+            // Store the user data in IndexedDB
+            const user = { name, username, password };
+
+            const transaction = db.transaction(["users"], "readwrite");
+            const store = transaction.objectStore("users");
+            const addRequest = store.add(user);
+
+            addRequest.onsuccess = function() {
+                alert("Registration successful! Please login.");
+                window.location.href = "login.html";
+            };
+
+            addRequest.onerror = function(event) {
+                alert("Registration failed! Username may already exist.");
+                console.error("Error:", event.target.error);
+            };
+        });
+    </script>
+</body>
+</html>
